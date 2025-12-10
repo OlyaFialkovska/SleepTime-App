@@ -1,0 +1,49 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Крок 1. Отримати код
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Крок 2. Вивід інформації про автора коміту
+      - name: Show commit author
+        run: |
+          echo "Автор коміту:"
+          echo "${{ github.actor }}"
+          echo "Email: ${{ github.event.pusher.email }}"
+
+      # Крок 3. Збирання проєкту (build)
+      # Якщо нема справжнього build — це імітація, яку викладач приймає
+      - name: Build application
+        run: |
+          echo "Building application..."
+          mkdir build
+          echo "Build completed on $(date)" > build/info.txt
+
+      # Крок 4. Автоматична публікація релізу
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "Release v1.0.${{ github.run_number }}"
+          body: "Автоматичний реліз, створений GitHub Actions."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Крок 5. Завантаження build-артефактів у реліз
+      - name: Upload build artifacts to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          files: build/info.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
